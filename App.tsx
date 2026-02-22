@@ -18,7 +18,8 @@ import {
   CheckCircle2,
   Play,
   RefreshCw,
-  Activity
+  Activity,
+  User
 } from 'lucide-react';
 
 // Refined Animation Variants
@@ -68,6 +69,101 @@ const AnimatedNumber = ({ value }: { value: number }) => {
   return <motion.span>{display}</motion.span>;
 };
 
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  className?: string;
+  href?: string;
+  target?: string;
+}
+
+const Button = ({ variant = 'primary', size = 'md', children, icon, className = '', href, target, style, ...props }: ButtonProps) => {
+  const [isClicked, setIsClicked] = useState(false);
+
+  const baseStyles = "relative overflow-hidden font-bold inline-flex items-center justify-center gap-3 transition-colors duration-300 ease-out group rounded-full";
+  
+  const sizeStyles = {
+    sm: "px-6 py-3 text-xs uppercase tracking-widest mono",
+    md: "px-8 py-4 text-sm md:text-base",
+    lg: "px-10 py-5 md:px-12 md:py-6 text-lg md:text-xl"
+  };
+
+  const getVariantStyles = () => {
+    if (isClicked) {
+      return "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30";
+    }
+    switch (variant) {
+      case 'primary':
+        return "bg-black text-white hover:bg-gray-900 shadow-xl shadow-black/10";
+      case 'secondary':
+        return "bg-white text-black hover:bg-gray-50 shadow-xl shadow-black/5";
+      case 'outline':
+        return "border border-black/10 bg-white/50 backdrop-blur-xl text-black hover:bg-white shadow-sm";
+      default:
+        return "";
+    }
+  };
+
+  const handlePress = (e: any) => {
+    setIsClicked(true);
+    setTimeout(() => setIsClicked(false), 300);
+    if (props.onClick) props.onClick(e);
+  };
+
+  const content = (
+    <>
+      <span className="relative z-10 flex items-center gap-3">
+        {children}
+        {icon && <span className="group-hover:translate-x-1 transition-transform">{icon}</span>}
+      </span>
+      <AnimatePresence>
+        {isClicked && (
+          <motion.div 
+            initial={{ scale: 0, opacity: 0.5 }}
+            animate={{ scale: 4, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 bg-white/20 rounded-full pointer-events-none"
+          />
+        )}
+      </AnimatePresence>
+    </>
+  );
+
+  const combinedClassName = `${baseStyles} ${sizeStyles[size]} ${getVariantStyles()} ${className} ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+
+  if (href) {
+    return (
+      <motion.a 
+        href={href}
+        target={target}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handlePress as any}
+        className={combinedClassName}
+        style={style}
+      >
+        {content}
+      </motion.a>
+    );
+  }
+
+  return (
+    <motion.button 
+      whileHover={props.disabled ? {} : { scale: 1.02, y: -2 }}
+      whileTap={props.disabled ? {} : { scale: 0.98 }}
+      onClick={handlePress}
+      className={combinedClassName}
+      style={style}
+      {...props}
+    >
+      {content}
+    </motion.button>
+  );
+};
+
 // Shared Types
 interface ServiceCard {
   id: string;
@@ -104,15 +200,9 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-10">
           <a href="#services" className="text-xs font-bold uppercase tracking-widest hover:text-blue-600 transition-colors mono">Services</a>
           <a href="#manifesto" className="text-xs font-bold uppercase tracking-widest hover:text-blue-600 transition-colors mono">Manifesto</a>
-          <motion.a 
-            href="https://calendly.com" 
-            target="_blank" 
-            className="bg-black text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest mono shadow-xl shadow-black/10"
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
+          <Button href="https://calendly.com" target="_blank" size="sm" variant="primary">
             Start Strategy
-          </motion.a>
+          </Button>
         </div>
 
         <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
@@ -130,7 +220,7 @@ const Navbar = () => {
           >
             <a href="#services" className="text-lg font-medium" onClick={() => setIsOpen(false)}>Services</a>
             <a href="#manifesto" className="text-lg font-medium" onClick={() => setIsOpen(false)}>Manifesto</a>
-            <button className="bg-black text-white px-6 py-4 rounded-xl text-lg font-bold">Book Strategy Call</button>
+            <Button size="md" variant="primary" className="w-full">Book Strategy Call</Button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -170,7 +260,7 @@ const Hero = () => {
             </span>
           </motion.div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-[7.5rem] mb-10 leading-[0.85] tracking-tighter overflow-hidden pb-4">
+          <h1 className="text-6xl md:text-8xl lg:text-[9rem] xl:text-[10rem] mb-10 leading-[0.8] tracking-tighter overflow-hidden pb-4">
             {words.map((word, i) => (
               <motion.span
                 key={i}
@@ -191,21 +281,14 @@ const Hero = () => {
           
           <motion.div 
             variants={sectionReveal}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6"
+            className="flex flex-col sm:flex-row items-center justify-center gap-6 pb-32 md:pb-40"
           >
-            <motion.button 
-              whileHover={{ scale: 1.05, boxShadow: "0 30px 60px -15px rgba(0,0,0,0.15)" }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full sm:w-auto bg-black text-white px-12 py-5 rounded-full text-lg font-bold flex items-center justify-center gap-3 group transition-all"
-            >
-              Start Evolution <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
-            </motion.button>
-            <motion.button 
-              whileHover={{ backgroundColor: "rgba(255,255,255,1)", scale: 1.05 }}
-              className="w-full sm:w-auto border border-black/5 bg-white/50 backdrop-blur-xl px-12 py-5 rounded-full text-lg font-bold text-black shadow-sm"
-            >
+            <Button size="lg" variant="primary" icon={<ArrowRight size={22} />} className="w-full sm:w-auto">
+              Start Your Evolution
+            </Button>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto">
               Case Studies
-            </motion.button>
+            </Button>
           </motion.div>
         </motion.div>
       </div>
@@ -294,7 +377,7 @@ const Services = () => {
           variants={sectionReveal}
           className="text-center mb-20"
         >
-          <h2 className="text-5xl md:text-7xl mb-6 font-bold tracking-tighter text-black">Our Capabilities</h2>
+          <h2 className="text-5xl md:text-8xl lg:text-9xl mb-6 font-bold tracking-tighter text-black">Our Capabilities</h2>
           <p className="text-gray-400 max-w-xl mx-auto text-xl font-light leading-relaxed">Infrastructure audits and roadmap design for adaptive intelligence.</p>
         </motion.div>
         
@@ -336,11 +419,11 @@ const Manifesto = () => {
           variants={sectionReveal}
           className="flex-1"
         >
-          <span className="mono text-blue-400 font-bold mb-8 block tracking-[0.3em] text-[10px] uppercase">MANIFESTO v.2</span>
-          <h2 className="text-5xl md:text-7xl lg:text-8xl leading-[0.9] mb-12 tracking-tighter">
-            Intelligence <br/> is a <span className="premium-serif italic font-normal text-blue-300">Reflex.</span>
+          <span className="mono text-blue-400 font-bold mb-8 block tracking-[0.3em] text-[10px] uppercase text-center md:text-left">MANIFESTO v.2</span>
+          <h2 className="text-5xl md:text-8xl lg:text-9xl leading-[0.85] mb-12 tracking-tighter text-center md:text-left">
+            Intelligence is a <span className="premium-serif italic font-normal text-blue-300">Reflex.</span>
           </h2>
-          <p className="text-lg md:text-xl text-blue-100/70 font-light leading-relaxed mb-12">
+          <p className="text-lg md:text-xl text-blue-100/70 font-light leading-relaxed mb-12 text-center md:text-left">
             In a world flooded with raw data, intelligence without action is a liability. 
             We build adaptive layers that turn strategy into automation.
           </p>
@@ -376,9 +459,24 @@ const Manifesto = () => {
                 // SYSTEM_SYNC_ACTIVE
               </div>
               <div className="space-y-8 relative z-10">
-                <motion.div initial={{ width: 0 }} whileInView={{ width: "85%" }} transition={{ delay: 0.5, duration: 2.5 }} className="h-2.5 bg-blue-400/30 rounded-full" />
-                <motion.div initial={{ width: 0 }} whileInView={{ width: "60%" }} transition={{ delay: 0.7, duration: 1.8 }} className="h-2.5 bg-blue-400/30 rounded-full" />
-                <motion.div initial={{ width: 0 }} whileInView={{ width: "95%" }} transition={{ delay: 0.9, duration: 2.2 }} className="h-2.5 bg-blue-400/30 rounded-full" />
+                <motion.div 
+                  initial={{ width: "10%" }} 
+                  animate={{ width: ["10%", "85%", "75%", "90%", "85%"] }} 
+                  transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} 
+                  className="h-2.5 bg-blue-400 rounded-full shadow-[0_0_15px_rgba(96,165,250,0.5)]" 
+                />
+                <motion.div 
+                  initial={{ width: "10%" }} 
+                  animate={{ width: ["10%", "60%", "45%", "65%", "60%"] }} 
+                  transition={{ duration: 3.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: 0.2 }} 
+                  className="h-2.5 bg-purple-400 rounded-full shadow-[0_0_15px_rgba(192,132,252,0.5)]" 
+                />
+                <motion.div 
+                  initial={{ width: "10%" }} 
+                  animate={{ width: ["10%", "95%", "80%", "100%", "95%"] }} 
+                  transition={{ duration: 4.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: 0.4 }} 
+                  className="h-2.5 bg-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.5)]" 
+                />
               </div>
               <div className="flex justify-between items-end relative z-10">
                 <motion.div 
@@ -417,15 +515,59 @@ const InteractiveDemo = () => {
   // We use a fixed seed concept by just hardcoding or using stable math if needed, 
   // but for this demo, simple random is fine as long as it doesn't re-render on every tick.
   // actually, we want them stable.
-  const [nodes] = useState(() => 
+  const [nodes, setNodes] = useState(() => 
     Array.from({ length: 16 }).map((_, i) => ({
       id: i,
       chaosX: 10 + Math.random() * 80,
-      chaosY: 10 + Math.random() * 80,
+      chaosY: 5 + Math.random() * 60,
       gridX: 20 + (i % 4) * 20,
-      gridY: 20 + Math.floor(i / 4) * 20,
+      gridY: 10 + Math.floor(i / 4) * 18,
     }))
   );
+
+  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}`;
+    let ws: WebSocket;
+
+    const connect = () => {
+      ws = new WebSocket(wsUrl);
+      setWsConnection(ws);
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'NODES_INIT' || data.type === 'NODES_UPDATE') {
+            setNodes(data.payload);
+          }
+        } catch (e) {
+          console.error("WebSocket message error", e);
+        }
+      };
+
+      ws.onclose = () => {
+        setWsConnection(null);
+        // Reconnect after 1 second if connection drops
+        setTimeout(connect, 1000);
+      };
+    };
+
+    connect();
+
+    return () => {
+      if (ws) ws.close();
+    };
+  }, []);
+
+  const fetchLatestData = () => {
+    if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+      wsConnection.send(JSON.stringify({ type: 'FETCH_LATEST' }));
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 500);
+    }
+  };
 
   return (
     <section className="py-32 bg-black text-white relative overflow-hidden">
@@ -442,14 +584,13 @@ const InteractiveDemo = () => {
               viewport={viewportConfig}
               variants={sectionReveal}
             >
-              <span className="mono text-blue-400 font-bold mb-6 block tracking-[0.3em] text-[10px] uppercase flex items-center gap-2">
+              <span className="mono text-blue-400 font-bold mb-6 block tracking-[0.3em] text-[10px] uppercase flex items-center justify-center md:justify-start gap-2">
                 <Activity size={14} /> LIVE_SIMULATION
               </span>
-              <h2 className="text-4xl md:text-5xl mb-6 font-bold tracking-tighter leading-[0.9]">
-                Chaos to <br/>
-                <span className="premium-serif italic font-normal" style={{ color: currentModel.color }}>Clarity.</span>
+              <h2 className="text-5xl md:text-8xl lg:text-9xl mb-6 font-bold tracking-tighter leading-[0.85] text-center md:text-left">
+                Chaos to <span className="premium-serif italic font-normal" style={{ color: currentModel.color }}>Clarity.</span>
               </h2>
-              <p className="text-gray-400 text-lg font-light leading-relaxed mb-8">
+              <p className="text-gray-400 text-lg font-light leading-relaxed mb-8 text-center md:text-left">
                 Watch how our autonomous agents identify bottlenecks and restructure workflows in milliseconds.
               </p>
 
@@ -500,39 +641,35 @@ const InteractiveDemo = () => {
                 </div>
               </div>
 
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setIsOptimized(!isOptimized);
-                  setIsAnimating(true);
-                  setTimeout(() => setIsAnimating(false), 500);
-                }}
-                style={{
-                  backgroundColor: isOptimized ? currentModel.color : '#ffffff',
-                  color: '#000000',
-                  boxShadow: isOptimized 
-                    ? `0 0 40px -10px ${currentModel.color}` 
-                    : '0 0 40px -10px rgba(255,255,255,0.3)'
-                }}
-                className="w-full sm:w-auto px-6 py-3 rounded-full font-bold flex items-center justify-center gap-3 transition-colors text-sm relative overflow-hidden"
-              >
-                <AnimatePresence>
-                  {isAnimating && (
-                    <motion.div 
-                      initial={{ scale: 0, opacity: 0.5 }}
-                      animate={{ scale: 4, opacity: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="absolute inset-0 bg-black/20 rounded-full pointer-events-none"
-                    />
-                  )}
-                </AnimatePresence>
-                <span className="relative z-10 flex items-center gap-3">
-                  {isOptimized ? <RefreshCw size={18} /> : <Play size={18} fill="currentColor" />}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  size="md"
+                  variant="secondary"
+                  onClick={() => {
+                    setIsOptimized(!isOptimized);
+                    setIsAnimating(true);
+                    setTimeout(() => setIsAnimating(false), 500);
+                  }}
+                  style={isOptimized ? {
+                    backgroundColor: currentModel.color,
+                    boxShadow: `0 0 40px -10px ${currentModel.color}`
+                  } : {}}
+                  icon={isOptimized ? <RefreshCw size={18} /> : <Play size={18} fill="currentColor" />}
+                  className="w-full sm:w-auto"
+                >
                   {isOptimized ? "Reset Simulation" : "Run Optimization"}
-                </span>
-              </motion.button>
+                </Button>
+
+                <Button 
+                  size="md"
+                  variant="outline"
+                  onClick={fetchLatestData}
+                  icon={<Activity size={18} />}
+                  className="w-full sm:w-auto !text-white !border-white/20 hover:!bg-white/10"
+                >
+                  Sync Data
+                </Button>
+              </div>
             </motion.div>
           </div>
 
@@ -596,13 +733,22 @@ const InteractiveDemo = () => {
                    backgroundColor: isOptimized ? currentModel.color : '#F87171',
                    scale: 1,
                  }}
+                 whileHover={{
+                   scale: 1.5,
+                   boxShadow: `0 0 20px 5px ${isOptimized ? currentModel.color : '#F87171'}80`,
+                   zIndex: 30
+                 }}
+                 whileTap={{
+                   scale: 2,
+                   boxShadow: `0 0 30px 10px ${isOptimized ? currentModel.color : '#F87171'}80`,
+                 }}
                  transition={{
                    type: "spring",
                    stiffness: 40,
                    damping: 15,
                    delay: isOptimized ? node.id * (0.02 * currentModel.speed) : 0 // Stagger effect
                  }}
-                 className="absolute w-4 h-4 -ml-2 -mt-2 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10"
+                 className="absolute w-4 h-4 -ml-2 -mt-2 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10 cursor-pointer"
                >
                  {/* Pulse effect when chaotic */}
                  {!isOptimized && (
@@ -633,14 +779,14 @@ const InteractiveDemo = () => {
              </AnimatePresence>
 
              {/* Status Label */}
-             <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${isOptimized ? '' : 'bg-red-400'} animate-pulse`} style={{ backgroundColor: isOptimized ? currentModel.color : undefined }} />
-                  <span className="text-[10px] mono uppercase tracking-widest text-white/50">
+             <div className="absolute bottom-8 left-8 right-8 flex justify-between items-center bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full ${isOptimized ? '' : 'bg-red-400'} animate-pulse`} style={{ backgroundColor: isOptimized ? currentModel.color : undefined }} />
+                  <span className="text-xs mono uppercase tracking-widest text-white/70 font-bold">
                     {isOptimized ? `OPTIMIZED: ${currentModel.name}` : 'DETECTING_ANOMALIES'}
                   </span>
                 </div>
-                <div className="text-[10px] mono text-white/30">
+                <div className="text-xs mono text-white/50 font-bold">
                   ID: 8492-X
                 </div>
              </div>
@@ -652,16 +798,18 @@ const InteractiveDemo = () => {
 };
 
 const Newsletter = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !name) return;
     setStatus('loading');
     setTimeout(() => {
       setStatus('success');
       setEmail('');
+      setName('');
     }, 1500);
   };
 
@@ -673,17 +821,17 @@ const Newsletter = () => {
           whileInView="visible"
           viewport={viewportConfig}
           variants={sectionReveal}
-          className="max-w-6xl mx-auto bg-[#f9f9f8] border border-gray-100 rounded-[3rem] md:rounded-[4rem] p-10 md:p-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-20 relative overflow-hidden"
+          className="max-w-4xl mx-auto bg-[#f9f9f8] border border-gray-100 rounded-[3rem] md:rounded-[4rem] p-10 md:p-24 flex flex-col items-center gap-12 lg:gap-16 relative overflow-hidden"
         >
-          <div className="flex-1 text-left relative z-10">
+          <div className="w-full text-center relative z-10 flex flex-col items-center">
             <span className="mono text-blue-600 font-bold mb-6 block tracking-[0.4em] text-[10px] uppercase">Insights</span>
-            <h2 className="text-4xl md:text-6xl mb-8 tracking-tighter font-bold leading-[0.95]">The <br/>Front Line of <span className="premium-serif italic font-normal text-blue-600">Intelligence.</span></h2>
-            <p className="text-gray-500 font-light leading-relaxed text-lg md:text-xl max-w-sm">
+            <h2 className="text-5xl md:text-7xl lg:text-8xl mb-8 tracking-tighter font-bold leading-[0.9]">The Front Line of <span className="premium-serif italic font-normal text-blue-600">Intelligence.</span></h2>
+            <p className="text-gray-500 font-light leading-relaxed text-lg md:text-xl max-w-md mx-auto">
               Weekly state-of-the-art insights on autonomous systems. No noise.
             </p>
           </div>
           
-          <div className="flex-1 w-full relative z-10">
+          <div className="w-full max-w-xl relative z-10">
             <AnimatePresence mode="wait">
               {status === 'success' ? (
                 <motion.div 
@@ -707,7 +855,18 @@ const Newsletter = () => {
                   className="flex flex-col gap-4 md:gap-6"
                 >
                   <div className="relative">
-                    <Mail className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 text-gray-400" size={20} className="md:w-6 md:h-6" />
+                    <User className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 text-gray-400 md:w-6 md:h-6" size={20} />
+                    <input 
+                      type="text" 
+                      placeholder="Your name"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-white border border-gray-200 rounded-[1.5rem] md:rounded-[2rem] py-5 md:py-8 pl-16 md:pl-20 pr-8 md:pr-10 focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all text-lg md:text-xl"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 text-gray-400 md:w-6 md:h-6" size={20} />
                     <input 
                       type="email" 
                       placeholder="Work email address"
@@ -717,15 +876,15 @@ const Newsletter = () => {
                       className="w-full bg-white border border-gray-200 rounded-[1.5rem] md:rounded-[2rem] py-5 md:py-8 pl-16 md:pl-20 pr-8 md:pr-10 focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all text-lg md:text-xl"
                     />
                   </div>
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  <Button 
+                    size="lg"
+                    variant="primary"
                     disabled={status === 'loading'}
-                    className="w-full bg-black text-white py-5 md:py-8 rounded-[1.5rem] md:rounded-[2rem] font-bold text-xl md:text-2xl hover:bg-gray-800 transition-all flex items-center justify-center gap-4 group disabled:opacity-50"
+                    className="w-full"
+                    icon={<ArrowRight size={20} className="md:w-6 md:h-6" />}
                   >
                     {status === 'loading' ? 'Syncing...' : 'Get Access'} 
-                    <ArrowRight size={20} className="md:w-6 md:h-6 group-hover:translate-x-1 transition-transform" />
-                  </motion.button>
+                  </Button>
                 </motion.form>
               )}
             </AnimatePresence>
@@ -749,19 +908,20 @@ const CTASection = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-50 pointer-events-none"></div>
           
-          <h2 className="text-5xl md:text-7xl lg:text-9xl mb-8 md:mb-12 relative z-10 tracking-tighter font-bold leading-[0.8]">
+          <h2 className="text-6xl md:text-8xl lg:text-[10rem] mb-8 md:mb-12 relative z-10 tracking-tighter font-bold leading-[0.8]">
             Build the <span className="premium-serif italic font-normal text-blue-200">Future.</span>
           </h2>
           <p className="text-lg md:text-2xl lg:text-3xl text-gray-400 mb-12 md:mb-16 max-w-3xl mx-auto relative z-10 font-light leading-relaxed">
             Partner with ATLAS AI to redefine your enterprise logic. Limited Q3 availability.
           </p>
-          <motion.button 
-            whileHover={{ scale: 1.05, y: -5 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative z-10 bg-white text-black px-8 py-4 md:px-14 md:py-7 rounded-full text-lg md:text-2xl font-bold hover:bg-blue-50 transition-all flex items-center gap-3 md:gap-5 mx-auto"
+          <Button 
+            size="lg"
+            variant="secondary"
+            className="mx-auto"
+            icon={<ArrowRight size={24} className="md:w-8 md:h-8" />}
           >
-            Start Conversation <ArrowRight size={24} className="md:w-8 md:h-8" />
-          </motion.button>
+            Start Conversation
+          </Button>
         </motion.div>
       </div>
     </section>
